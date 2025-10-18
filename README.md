@@ -1,6 +1,6 @@
 <div align="center">
   <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/characters/samo/profile.png" alt="Little Samo Mascot" width="250" />
-  <h1>SamoAI Instagram Parser</h1>
+  <h1>SamoAI Instagram Tracker</h1>
   <p><em>AI-powered Instagram influencer discovery tool using <a href="https://github.com/little-samo/SamoAI">@little-samo/samo-ai</a> multi-agent system</em></p>
 </div>
 
