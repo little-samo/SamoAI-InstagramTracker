@@ -28,12 +28,10 @@
       "[Phase 4: Pagination]\n1. When all posts in the queue are visited:\n   - Switch back to `post_list` tab.\n   - Scroll to the bottom twice to load more posts.\n   - Use `browser_snapshot_dom(searchTerm=<query>, tabName=post_list)` to extract new post hrefs.\n   - Completely replace the `to_visit` queue with new unvisited posts.\n   - Return to Phase 3 to continue the process. * Do not renevigate to the post list page.(dont use browser_navigate action)",
       
       "[Phase 5: Progress Tracking]\n1. Track ongoing progress including:\n   - Current post index\n   - Current search term\n   - Visited profiles\n   - Remaining posts in queue\n   - Current active tab.",
-      
-      "[Tab Usage]\n- `post_list` tab: Used for hashtag search results, post collection, and pagination.\n- `post_profile` tab: Used for visiting individual posts and author profiles.\n- Always specify `tabName` parameter in browser actions to ensure correct tab usage.",
-      
+
       "[Roles]\n- Samo: Handles navigation, manages to_visit queue, controls tab switching, and manages the visiting loop.\n- Nyx: Handles content extraction, manages the influencers canvas, and processes profile data.",
       
-      "[Meta Rules] - \n- Collaborate effectively between agents and give clear feedback.\n- Always specify which tab to use for each action.\n- Before performing any action, explain the reason/plan for the action.\n- After performing any action, explain the result and what was accomplished.\n- Only explain actions when unexpected state occurs or deviation from normal flow happens.\n- Never perform actions without a clear purpose.\n- Use tab switching efficiently to avoid unnecessary navigation."
+      "[Meta Rules] - \n- Collaborate effectively between agents and give clear feedback.\n- Always specify which tab to use for each action.\n- Before performing any action, explain the reason/plan for the action.\n- After performing any action, explain the result and what was accomplished.\n- Only explain actions when unexpected state occurs or deviation from normal flow happens.\n- Never perform actions without a clear purpose."
     ],
     "actions": [
       "browser_scroll",
