@@ -1,0 +1,50 @@
+{
+  "id": 1,
+  "Name": "Chromium Browser Location",
+  "key": "chromium_browser",
+  "meta": {
+    "core": "update_forever",
+    "description": "A comprehensive browser automation workspace where specialized agents collaborate to perform web tasks. Each agent has specific responsibilities: Navigator handles navigation, Interactor manages user interactions, Observer analyzes page content, Tab Manager controls tabs, and Browser Controller manages the browser lifecycle.",
+    "messageLengthLimit": 1000,
+    "canvases": [
+      {
+        "name": "to_visit",
+        "description": "Queue of posts to visit (format: url | unvisited/visited). seperated by '\n' character",
+        "maxLength": 100000
+      },
+      {
+        "name": "influencers",
+        "description": "Collected influencer summaries (one per line: @id | name | followers: N | following: M), one per line(seperated by newline)",
+        "maxLength":  100000
+      }
+    ],
+    "rules": [
+      "[Phase 1: Setup]\n1. Switch to `post_list` tab and call `view_screen` to verify the current page state.\n2. Construct hashtag search URL: https://www.instagram.com/explore/search/keyword/?q=%23<query>.\n3. Navigate to that URL in the `post_list` tab to open the hashtag post list page.",
+      
+      "[Phase 2: Collect Posts] Extract all links (href='/p/...') and build `to_visit` queue as format: url | unvisited. In `post_list` tab, use `browser_snapshot_dom(searchTerm=<query>, tabName=post_list)` to extract post hrefs from the hashtag post list page.",
+      
+      "[Phase 3: Visit Posts]\n1. If an unvisited post exists in the `to_visit` queue:\n   - Switch to `post_profile` tab and visit the post URL.\n   - Mark the post as visited in the queue.\n   - Extract the author's username from the post page's dom and screenshot.\n   - If author is not in `influencers` canvas, then visit the author's profile page: https://www.instagram.com/<username> in the same `post_profile` tab.\n   - Use `browser_snapshot_dom(tabName=post_profile)` (no searchTerm) to parse username, followers, and following.\n   - If appropriate, append an entry to the `influencers` canvas (one per line): `@id | name | followers: N | following: M\n`(seperated by newline character, do not include duplicates).",
+      
+      "[Phase 4: Pagination]\n1. When all posts in the queue are visited:\n   - Switch back to `post_list` tab.\n   - Scroll to the bottom twice to load more posts.\n   - Use `browser_snapshot_dom(searchTerm=<query>, tabName=post_list)` to extract new post hrefs.\n   - Completely replace the `to_visit` queue with new unvisited posts.\n   - Return to Phase 3 to continue the process. * Do not renevigate to the post list page.(dont use browser_navigate action)",
+      
+      "[Phase 5: Progress Tracking]\n1. Track ongoing progress including:\n   - Current post index\n   - Current search term\n   - Visited profiles\n   - Remaining posts in queue\n   - Current active tab.",
+      
+      "[Tab Usage]\n- `post_list` tab: Used for hashtag search results, post collection, and pagination.\n- `post_profile` tab: Used for visiting individual posts and author profiles.\n- Always specify `tabName` parameter in browser actions to ensure correct tab usage.",
+      
+      "[Roles]\n- Samo: Handles navigation, manages to_visit queue, controls tab switching, and manages the visiting loop.\n- Nyx: Handles content extraction, manages the influencers canvas, and processes profile data.",
+      
+      "[Meta Rules] - \n- Collaborate effectively between agents and give clear feedback.\n- Always specify which tab to use for each action.\n- Before performing any action, explain the reason/plan for the action.\n- After performing any action, explain the result and what was accomplished.\n- Only explain actions when unexpected state occurs or deviation from normal flow happens.\n- Never perform actions without a clear purpose.\n- Use tab switching efficiently to avoid unnecessary navigation."
+    ],
+    "actions": [
+      "browser_scroll",
+      "view_screen",
+      "browser_snapshot_dom",
+      "browser_navigate",
+      "browser_wait_for_navigation",
+      "browser_click",
+      "browser_wait",
+      "switch_tab",
+      "list_tabs"
+    ]
+  }
+}
