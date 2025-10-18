@@ -23,11 +23,11 @@
 - **Smart Pagination**: Automatically load more posts and continue collection
 
 <div align="center">
-  <img src="screenshots/screenshot_1.png.png" alt="Instagram Parser Web Interface" width="800" />
+  <img src="screenshots/screenshot_1.png" alt="Instagram Parser Web Interface" width="800" />
   <p><em>Web Interface - Real-time monitoring of influencer discovery process</em></p>
   
-  <img src="screenshots/screenshot_2.png" alt="Chrome Browser Automation" width="600" />
-  <p><em>Chrome Browser - Dual-tab automation for efficient data collection</em></p>
+  <img src="screenshots/screenshot_2.png" alt="Chrome Browser Automation" width="800" />
+  <p><em>Execution Result - Real-time data collection in progress</em></p>
 </div>
 
 ## Installation
@@ -87,6 +87,17 @@ This will:
 1. Start the web server (default: http://localhost:5173)
 2. Launch Chrome browser with dual tabs
 3. Open the web interface automatically
+
+### ⚠️ Important: Instagram Login Required
+
+**Before starting the data collection process, you must manually log in to Instagram:**
+
+1. **Wait for Chrome to open** with two tabs (`post_list` and `post_profile`)
+2. **Log in manually** with your Instagram credentials
+3. **Complete any security verifications** (2FA, email verification, etc.)
+4. **Return to the web interface** and start chatting with the agents
+
+> **Note**: The agents cannot log in automatically due to Instagram's security measures. Manual login is required for the automation to work properly.
 
 ### Web Interface
 
