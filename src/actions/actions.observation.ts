@@ -22,7 +22,9 @@ export class ViewScreenAction extends AgentAction {
       tabName: z
         .string()
         .optional()
-        .describe('Name of the tab to perform the action on. If not specified, uses the first available tab.'),
+        .describe(
+          'Name of the tab to perform the action on. If not specified, uses the first available tab.'
+        ),
     });
   }
 
@@ -50,7 +52,6 @@ export class ViewScreenAction extends AgentAction {
       });
 
       const base64 = (screenshot as Buffer).toString('base64');
-      const finalSize = base64.length;
 
       // Save the screenshot into location state images[0]
       await SamoAI.instance.locationRepository.updateLocationStateImage(
@@ -89,7 +90,9 @@ export class BrowserSnapshotDomAction extends AgentAction {
       tabName: z
         .string()
         .optional()
-        .describe('Name of the tab to perform the action on. If not specified, uses the first available tab.'),
+        .describe(
+          'Name of the tab to perform the action on. If not specified, uses the first available tab.'
+        ),
     });
   }
 
@@ -276,7 +279,6 @@ export class BrowserSnapshotDomAction extends AgentAction {
       );
       const options: string[] = [];
       if (action.searchTerm) options.push(`searchTerm: ${action.searchTerm}`);
-      const optionsText = options.length > 0 ? ` (${options.join(', ')})` : '';
 
       await this.location.addSystemMessage(
         `[${this.agent.model.name}] DOM snapshot captured and saved to location rendering`
