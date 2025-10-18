@@ -1,7 +1,7 @@
-import path from 'path';
-import http from 'http';
-import url from 'url';
 import { spawn } from 'child_process';
+import http from 'http';
+import path from 'path';
+import url from 'url';
 
 import {
   LocationId,
@@ -22,11 +22,13 @@ import {
 } from '@little-samo/samo-ai-repository-storage';
 import * as dotenv from 'dotenv';
 
-import * as packageJson from '../package.json';
-
 // Import Chrome actions to register them
 import './actions';
-import { launchChromeBrowser, closeChromeBrowser, createNewTab } from './actions/chrome-actions';
+import {
+  launchChromeBrowser,
+  closeChromeBrowser,
+  createNewTab,
+} from './actions/chrome-actions';
 
 dotenv.config();
 
@@ -89,7 +91,7 @@ async function bootstrap() {
   // Default options for web server
   const options: ChatOptions = {
     agents: 'samo,nyx',
-    location: 'instagram_parsing'
+    location: 'instagram_parsing',
   };
 
   // Initialize storages
@@ -98,9 +100,7 @@ async function bootstrap() {
   await agentStorage.initialize(agents);
   await userStorage.initialize(['user']);
 
-  const locationId = Number(
-    locationStorage.getLocationIds()[0]
-  ) as LocationId;
+  const locationId = Number(locationStorage.getLocationIds()[0]) as LocationId;
   const userId = Number(userStorage.getUserIds()[0]) as UserId;
   const userName = (await userStorage.getUserModel(userId)).nickname;
 
@@ -108,10 +108,7 @@ async function bootstrap() {
   const locationState =
     await locationStorage.getOrCreateLocationState(locationId);
   for (const locationUserId of locationState.userIds) {
-    await locationStorage.removeLocationStateUserId(
-      locationId,
-      locationUserId
-    );
+    await locationStorage.removeLocationStateUserId(locationId, locationUserId);
   }
   for (const locationAgentId of locationState.agentIds) {
     await locationStorage.removeLocationStateAgentId(
@@ -129,8 +126,7 @@ async function bootstrap() {
 
   // Start web server
   async function startWebServer() {
-
-      const indexHtml = `<!doctype html>
+    const indexHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -351,103 +347,141 @@ async function bootstrap() {
   </body>
 </html>`;
 
-      function sendJson(res: http.ServerResponse, body: unknown, status = 200) {
-        const buf = Buffer.from(JSON.stringify(body));
-        res.writeHead(status, {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Content-Length': buf.length,
-        });
-        res.end(buf);
+    function sendJson(res: http.ServerResponse, body: unknown, status = 200) {
+      const buf = Buffer.from(JSON.stringify(body));
+      res.writeHead(status, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Length': buf.length,
+      });
+      res.end(buf);
+    }
+
+    const server = http.createServer(async (req, res) => {
+      const parsed = url.parse(req.url || '/', true);
+      const pathname = parsed.pathname || '/';
+
+      if (req.method === 'GET' && pathname === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(indexHtml);
+        return;
       }
 
-      const server = http.createServer(async (req, res) => {
-        const parsed = url.parse(req.url || '/', true);
-        const pathname = parsed.pathname || '/';
+      if (req.method === 'GET' && pathname === '/api/messages') {
+        const messages = await locationStorage.getLocationMessages(
+          locationId,
+          200
+        );
+        sendJson(res, messages || []);
+        return;
+      }
 
-        if (req.method === 'GET' && pathname === '/') {
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(indexHtml);
-          return;
+      if (req.method === 'GET' && pathname === '/api/thinking') {
+        // Get current thinking agent from location state
+        try {
+          const statePath = path.join(
+            process.cwd(),
+            'states',
+            'locations',
+            `${options.location}.json`
+          );
+          const fs = await import('fs/promises');
+          const raw = await fs.readFile(statePath, 'utf-8');
+          const json = JSON.parse(raw);
+          const thinkingAgent = json?.state?.thinkingAgentName || null;
+          sendJson(res, { agentName: thinkingAgent });
+        } catch {
+          sendJson(res, { agentName: null });
         }
+        return;
+      }
 
-        if (req.method === 'GET' && pathname === '/api/messages') {
-          const messages = await locationStorage.getLocationMessages(locationId, 200);
-          sendJson(res, messages || []);
-          return;
-        }
-
-        if (req.method === 'GET' && pathname === '/api/thinking') {
-          // Get current thinking agent from location state
+      if (req.method === 'POST' && pathname === '/api/message') {
+        const chunks: Buffer[] = [];
+        req.on('data', (c) => chunks.push(Buffer.from(c)));
+        req.on('end', async () => {
           try {
-            const statePath = path.join(process.cwd(), 'states', 'locations', `${options.location}.json`);
-            const fs = await import('fs/promises');
-            const raw = await fs.readFile(statePath, 'utf-8');
-            const json = JSON.parse(raw);
-            const thinkingAgent = json?.state?.thinkingAgentName || null;
-            sendJson(res, { agentName: thinkingAgent });
-          } catch (e) {
-            sendJson(res, { agentName: null });
-          }
-          return;
-        }
-
-        if (req.method === 'POST' && pathname === '/api/message') {
-          const chunks: Buffer[] = [];
-          req.on('data', (c) => chunks.push(Buffer.from(c)));
-          req.on('end', async () => {
-            try {
-              const body = JSON.parse(Buffer.concat(chunks).toString('utf-8')) as { text?: string };
-              const text = (body.text || '').trim();
-              if (!text) { sendJson(res, { ok:false, error:'Empty message' }, 400); return; }
-              await SamoAI.instance.addLocationUserMessage(locationId, userId, userName, text);
-              await locationStorage.updateLocationStatePauseUpdateUntil(
-                locationId,
-                new Date(Date.now() + 500)
-              );
-              sendJson(res, { ok:true });
-            } catch (e) {
-              sendJson(res, { ok:false, error:String(e) }, 500);
+            const body = JSON.parse(
+              Buffer.concat(chunks).toString('utf-8')
+            ) as { text?: string };
+            const text = (body.text || '').trim();
+            if (!text) {
+              sendJson(res, { ok: false, error: 'Empty message' }, 400);
+              return;
             }
-          });
-          return;
-        }
+            await SamoAI.instance.addLocationUserMessage(
+              locationId,
+              userId,
+              userName,
+              text
+            );
+            await locationStorage.updateLocationStatePauseUpdateUntil(
+              locationId,
+              new Date(Date.now() + 500)
+            );
+            sendJson(res, { ok: true });
+          } catch (e) {
+            sendJson(res, { ok: false, error: String(e) }, 500);
+          }
+        });
+        return;
+      }
 
-        if (req.method === 'GET' && pathname === '/api/influencers') {
-          try {
-            const statePath = path.join(process.cwd(), 'states', 'locations', `${options.location}.json`);
-            const fs = await import('fs/promises');
-            const raw = await fs.readFile(statePath, 'utf-8');
-            const json = JSON.parse(raw);
+      if (req.method === 'GET' && pathname === '/api/influencers') {
+        try {
+          const statePath = path.join(
+            process.cwd(),
+            'states',
+            'locations',
+            `${options.location}.json`
+          );
+          const fs = await import('fs/promises');
+          const raw = await fs.readFile(statePath, 'utf-8');
+          const json = JSON.parse(raw);
 
-            // Exact path: state.canvases.influencers.text
-            const textBlob: string = String(json?.state?.canvases?.influencers?.text || '');
-            
-            let influencers: InfluencerItem[] = [];
-            
-            if (textBlob.trim()) {
-              // Split by line breaks
-              const lines = textBlob.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-              
-              influencers = lines.map((line): InfluencerItem => {
-                
+          // Exact path: state.canvases.influencers.text
+          const textBlob: string = String(
+            json?.state?.canvases?.influencers?.text || ''
+          );
+
+          let influencers: InfluencerItem[] = [];
+
+          if (textBlob.trim()) {
+            // Split by line breaks
+            const lines = textBlob
+              .split(/\r?\n/)
+              .map((s) => s.trim())
+              .filter(Boolean);
+
+            influencers = lines
+              .map((line): InfluencerItem => {
                 // Parse @handle | name | followers: N | following: M format
-                const parts = line.split('|').map(p => p.trim());
+                const parts = line.split('|').map((p) => p.trim());
                 const handlePart = parts[0] || '';
                 const namePart = parts[1] || '';
-                
-                const followersMatch = line.match(/followers:\s*([\d,\.]+[km]?)/i);
-                const followingMatch = line.match(/following:\s*([\d,\.]+[km]?)/i);
-                
-                const username = handlePart.startsWith('@') ? handlePart.slice(1) : handlePart;
-                
+
+                const followersMatch = line.match(
+                  /followers:\s*([\d,\.]+[km]?)/i
+                );
+                const followingMatch = line.match(
+                  /following:\s*([\d,\.]+[km]?)/i
+                );
+
+                const username = handlePart.startsWith('@')
+                  ? handlePart.slice(1)
+                  : handlePart;
+
                 // Keep original format (37k, 1.2m, etc.) instead of converting to numbers
-                const followers = followersMatch ? followersMatch[1] : undefined;
-                const following = followingMatch ? followingMatch[1] : undefined;
-                
+                const followers = followersMatch
+                  ? followersMatch[1]
+                  : undefined;
+                const following = followingMatch
+                  ? followingMatch[1]
+                  : undefined;
+
                 // Extract bio from name part (if there's a long description)
                 const bio = namePart.length > 15 ? namePart : '';
                 const displayName = namePart.length > 15 ? username : namePart;
-                
+
                 const result: InfluencerItem = {
                   username,
                   name: displayName || username,
@@ -456,106 +490,140 @@ async function bootstrap() {
                   following,
                 };
                 return result;
-              }).filter((item) => item.username && item.username.trim());
-            }
-
-            sendJson(res, { influencers });
-          } catch (e) {
-            sendJson(res, { influencers: [], error: String(e) }, 200);
+              })
+              .filter((item) => item.username && item.username.trim());
           }
-          return;
+
+          sendJson(res, { influencers });
+        } catch (e) {
+          sendJson(res, { influencers: [], error: String(e) }, 200);
         }
-
-        res.statusCode = 404;
-        res.end('Not Found');
-      });
-
-      const port = Number(process.env.PORT || 5173);
-      // Automatically launch agent browser (Puppeteer) with multiple tabs
-      try {
-        console.log('Launching automation browser...');
-        await launchChromeBrowser('https://www.instagram.com/', 'post_list');
-        console.log('Automation browser launched with post_list tab.');
-        
-        // Create post&profile tab
-        await createNewTab('post_profile', 'https://www.instagram.com/');
-        console.log('Created post_profile tab.');
-      } catch (e) {
-        console.log('Failed to launch automation browser:', e);
+        return;
       }
 
-      server.listen(port, () => {
-        const uiUrl = `http://localhost:${port}`;
-        console.log(`Web UI: ${uiUrl}`);
-        // Auto-open UI in default browser (cross-platform)
-        const { platform } = process;
-        try {
-          if (platform === 'win32') {
-            spawn('cmd', ['/c', 'start', '', uiUrl], { detached: true, stdio: 'ignore' }).unref();
-          } else if (platform === 'darwin') {
-            spawn('open', [uiUrl], { detached: true, stdio: 'ignore' }).unref();
-          } else {
-            spawn('xdg-open', [uiUrl], { detached: true, stdio: 'ignore' }).unref();
-          }
-        } catch {}
-      });
+      res.statusCode = 404;
+      res.end('Not Found');
+    });
 
-      const updateLoop = async () => {
-        while (true) {
-          try {
-            const locationState = await locationStorage.getOrCreateLocationState(locationId);
-            const now = new Date();
-            if (
-              locationState.pauseUpdateUntil &&
-              new Date(locationState.pauseUpdateUntil) <= now
-            ) {
-              await SamoAI.instance.updateLocation(userId, locationId, {
-                preAction: async (location: Location) => {
-                  // Track thinking agents
-                  location.on('agentExecuteNextActions', async (agent: Agent) => {
-                    // Update thinking state in location state
-                    try {
-                      const statePath = path.join(process.cwd(), 'states', 'locations', `${options.location}.json`);
-                      const fs = await import('fs/promises');
-                      const raw = await fs.readFile(statePath, 'utf-8');
-                      const json = JSON.parse(raw);
-                      json.state.thinkingAgentName = agent.model.name;
-                      await fs.writeFile(statePath, JSON.stringify(json, null, 2));
-                    } catch (e) {
-                      // Ignore errors
-                    }
-                  });
-                  
-                  // Clear thinking state when agent responds
-                  location.on('messageAdded', async (_loc: Location, message: LocationMessage) => {
-                    if (message.entityType !== EntityType.User && message.name) {
+    const port = Number(process.env.PORT || 5173);
+    // Automatically launch agent browser (Puppeteer) with multiple tabs
+    try {
+      console.log('Launching automation browser...');
+      await launchChromeBrowser('https://www.instagram.com/', 'post_list');
+      console.log('Automation browser launched with post_list tab.');
+
+      // Create post&profile tab
+      await createNewTab('post_profile', 'https://www.instagram.com/');
+      console.log('Created post_profile tab.');
+    } catch (e) {
+      console.log('Failed to launch automation browser:', e);
+    }
+
+    server.listen(port, () => {
+      const uiUrl = `http://localhost:${port}`;
+      console.log(`Web UI: ${uiUrl}`);
+      // Auto-open UI in default browser (cross-platform)
+      const { platform } = process;
+      try {
+        if (platform === 'win32') {
+          spawn('cmd', ['/c', 'start', '', uiUrl], {
+            detached: true,
+            stdio: 'ignore',
+          }).unref();
+        } else if (platform === 'darwin') {
+          spawn('open', [uiUrl], { detached: true, stdio: 'ignore' }).unref();
+        } else {
+          spawn('xdg-open', [uiUrl], {
+            detached: true,
+            stdio: 'ignore',
+          }).unref();
+        }
+      } catch {}
+    });
+
+    const updateLoop = async () => {
+      while (true) {
+        try {
+          const locationState =
+            await locationStorage.getOrCreateLocationState(locationId);
+          const now = new Date();
+          if (
+            locationState.pauseUpdateUntil &&
+            new Date(locationState.pauseUpdateUntil) <= now
+          ) {
+            await SamoAI.instance.updateLocation(userId, locationId, {
+              preAction: async (location: Location) => {
+                // Track thinking agents
+                location.on('agentExecuteNextActions', async (agent: Agent) => {
+                  // Update thinking state in location state
+                  try {
+                    const statePath = path.join(
+                      process.cwd(),
+                      'states',
+                      'locations',
+                      `${options.location}.json`
+                    );
+                    const fs = await import('fs/promises');
+                    const raw = await fs.readFile(statePath, 'utf-8');
+                    const json = JSON.parse(raw);
+                    json.state.thinkingAgentName = agent.model.name;
+                    await fs.writeFile(
+                      statePath,
+                      JSON.stringify(json, null, 2)
+                    );
+                  } catch {
+                    // Ignore errors
+                  }
+                });
+
+                // Clear thinking state when agent responds
+                location.on(
+                  'messageAdded',
+                  async (_loc: Location, message: LocationMessage) => {
+                    if (
+                      message.entityType !== EntityType.User &&
+                      message.name
+                    ) {
                       try {
-                        const statePath = path.join(process.cwd(), 'states', 'locations', `${options.location}.json`);
+                        const statePath = path.join(
+                          process.cwd(),
+                          'states',
+                          'locations',
+                          `${options.location}.json`
+                        );
                         const fs = await import('fs/promises');
                         const raw = await fs.readFile(statePath, 'utf-8');
                         const json = JSON.parse(raw);
                         if (json.state.thinkingAgentName === message.name) {
                           json.state.thinkingAgentName = null;
-                          await fs.writeFile(statePath, JSON.stringify(json, null, 2));
+                          await fs.writeFile(
+                            statePath,
+                            JSON.stringify(json, null, 2)
+                          );
                         }
-                      } catch (e) {
+                      } catch {
                         // Ignore errors
                       }
                     }
-                  });
-                },
-                handleSave: async (save) => { try { await save; } catch {} },
-              });
-            }
-            await new Promise((resolve) => setTimeout(resolve, 150));
-          } catch {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+                  }
+                );
+              },
+              handleSave: async (save) => {
+                try {
+                  await save;
+                } catch {}
+              },
+            });
           }
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        } catch {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
-      };
+      }
+    };
 
-      void updateLoop();
-    } 
+    void updateLoop();
+  }
 
   // Start the web server
   await startWebServer();
