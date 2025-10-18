@@ -1,7 +1,7 @@
 {
-  "name": "samoai-example-web",
+  "name": "samoai-InstagramTracker",
   "version": "0.2.0",
-  "description": "SamoAI Web UI Example",
+  "description": "SamoAI Instagram Tracker",
   "license": "MIT",
   "engines": {
     "node": ">=22.0.0"
