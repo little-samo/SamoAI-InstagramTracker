@@ -38,15 +38,15 @@ export class ViewScreenAction extends AgentAction {
           'Browser not launched. Please run launch_browser first.'
         );
 
-      // 뷰포트로만 제한 (fullPage 항상 false)
+      // Limit to viewport only (fullPage always false)
       const quality = action.input?.includes('high') ? 1.0 : 0.8;
       const maxWidth = action.input?.includes('small') ? 800 : 1200;
 
-      // 뷰포트 크기 설정
+      // Set viewport size
       await page.setViewport({ width: maxWidth, height: 600 });
 
       const screenshot = await page.screenshot({
-        fullPage: false, // 항상 뷰포트만
+        fullPage: false, // Always viewport only
         type: 'jpeg',
         quality: quality * 100,
       });
@@ -76,7 +76,7 @@ export class ViewScreenAction extends AgentAction {
 @RegisterAgentAction('browser_snapshot_dom')
 export class BrowserSnapshotDomAction extends AgentAction {
   public override get description(): string {
-    return 'Capture DOM snapshot of the current page. Use searchTerm to filter elements containing specific text (e.g., "부산맛집" or "#부산맛집")';
+    return 'Capture DOM snapshot of the current page. Use searchTerm to filter elements containing specific text (e.g., "busan_food" or "#busan_food")';
   }
 
   public override get parameters(): z.ZodSchema {
@@ -85,7 +85,7 @@ export class BrowserSnapshotDomAction extends AgentAction {
         .string()
         .optional()
         .describe(
-          'Filter elements containing this text (supports hashtag format like #부산맛집)'
+          'Filter elements containing this text (supports hashtag format like #busan_food)'
         ),
       tabName: z
         .string()
@@ -146,7 +146,7 @@ export class BrowserSnapshotDomAction extends AgentAction {
           const text = element.textContent?.toLowerCase() || '';
           const termLower = term.toLowerCase();
 
-          // Check for hashtag format (#부산맛집)
+          // Check for hashtag format (#busan_food)
           const hashtagTerm = '#' + termLower;
 
           return text.includes(termLower) || text.includes(hashtagTerm);

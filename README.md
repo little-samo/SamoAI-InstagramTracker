@@ -131,7 +131,7 @@ The Instagram parser follows a sophisticated multi-phase workflow using two spec
 
 #### Phase 1: Setup
 1. Switch to `post_list` tab
-2. Navigate to hashtag search page (e.g., `#부산맛집`)
+2. Navigate to hashtag search page (e.g., `#busan_food`)
 3. Verify page state with screenshot
 
 #### Phase 2: Collect Posts

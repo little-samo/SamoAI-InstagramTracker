@@ -79,7 +79,7 @@ export class BrowserWaitForNavigationAction extends AgentAction {
 
       await page.waitForFunction(() => document.readyState === 'complete');
 
-      // 1초 추가 대기
+      // Additional 1 second wait
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       await this.location.addSystemMessage(

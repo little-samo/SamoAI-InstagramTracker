@@ -261,7 +261,7 @@ async function bootstrap() {
             metaEl.textContent = meta.join(' · ');
             c.appendChild(metaEl);
           } else {
-            // 팔로워 정보가 없어도 기본 정보 표시
+            // Display basic information even without follower info
             const metaEl = el('div','meta');
             metaEl.style.marginTop = '6px';
             metaEl.style.color = '#6b7280';

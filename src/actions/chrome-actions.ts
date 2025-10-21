@@ -102,10 +102,11 @@ export async function closeChromeBrowser(): Promise<void> {
 }
 
 /**
- * Find Chrome executable path on Windows
+ * Find Chrome executable path on Windows and Mac
  */
 function findChromeExecutable(): string | null {
   const possiblePaths = [
+    // Windows paths
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Users\\' +
@@ -114,6 +115,11 @@ function findChromeExecutable(): string | null {
     'C:\\Users\\' +
       process.env.USERNAME +
       '\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe',
+    // Mac paths
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    process.env.HOME + '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    process.env.HOME + '/Applications/Chromium.app/Contents/MacOS/Chromium',
   ];
 
   for (const chromePath of possiblePaths) {
