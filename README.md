@@ -23,7 +23,7 @@
 - **Smart Pagination**: Automatically load more posts and continue collection
 
 <div align="center">
-  <img src="screenshots/running.gif" alt="Instagram Parser Web Interface" width="800" />
+  <img src="screenshots/running.gif" alt="Instagram Parser Web Interface" width="600" />
   <p><em>Web Interface - Real-time monitoring of influencer discovery process</em></p>
   
   <img src="screenshots/screenshot_2.png" alt="Chrome Browser Automation" width="800" />
