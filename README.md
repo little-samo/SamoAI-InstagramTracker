@@ -23,7 +23,7 @@
 - **Smart Pagination**: Automatically load more posts and continue collection
 
 <div align="center">
-  <img src="screenshots/screenshot_1.png" alt="Instagram Parser Web Interface" width="800" />
+  <img src="screenshots/running.gif" alt="Instagram Parser Web Interface" width="800" />
   <p><em>Web Interface - Real-time monitoring of influencer discovery process</em></p>
   
   <img src="screenshots/screenshot_2.png" alt="Chrome Browser Automation" width="800" />
@@ -57,7 +57,8 @@ cp .env.example .env
 Edit the `.env` file and add your LLM API key (at least one required):
 
 ```env
-# Choose one or more providers
+# Choose one or more providers based on your agent configuration
+# Check models/agents/ directory to see which LLM your agents are configured to use
 OPENAI_API_KEY=your_openai_api_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 GOOGLE_AI_API_KEY=your_google_ai_api_key
@@ -65,6 +66,16 @@ GOOGLE_AI_API_KEY=your_google_ai_api_key
 # Optional: Set custom port for web interface
 PORT=5173
 ```
+
+**📋 API Key Setup Guide:**
+
+1. **Check your agent configuration**: Look at `models/agents/` directory to see which LLM providers your agents (Samo & Nyx) are configured to use
+2. **Required API keys**: You need at least one API key that matches your agent configurations
+3. **Multiple providers**: You can set multiple API keys if your agents use different LLM providers
+4. **Get API keys**:
+   - **OpenAI**: [OpenAI API Keys](https://platform.openai.com/api-keys)
+   - **Anthropic**: [Anthropic API Keys](https://console.anthropic.com/)
+   - **Google AI**: [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ### Step 3: Verify Chrome Installation
 

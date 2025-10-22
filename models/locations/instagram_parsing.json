@@ -24,6 +24,8 @@
       "[Phase 2: Collect Posts] Extract all links (href='/p/...') and build `to_visit` queue as format: url | unvisited. In `post_list` tab, use `browser_snapshot_dom(searchTerm=<query>, tabName=post_list)` to extract post hrefs from the hashtag post list page.",
       
       "[Phase 3: Visit Posts]\n1. If an unvisited post exists in the `to_visit` queue:\n   - Switch to `post_profile` tab and visit the post URL.\n   - Mark the post as visited in the queue.\n   - Extract the author's username from the post page's dom and screenshot.\n   - If author is not in `influencers` canvas, then visit the author's profile page: https://www.instagram.com/<username> in the same `post_profile` tab.(NEVER skip this step)\n   - Use `browser_snapshot_dom(tabName=post_profile)` (no searchTerm) to parse username, followers, and following.\n   - If appropriate, append an entry to the `influencers` canvas (one per line): `@id | name | followers: N | following: M\n`(seperated by newline character, do not include duplicates).",
+
+      "Caution for Phase 3: Do not skip the step of visiting the author's profile page.",
       
       "[Phase 4: Pagination]\n1. When all posts in the queue are visited:\n   - Switch back to `post_list` tab.\n   - Scroll to the bottom twice to load more posts.\n   - Use `browser_snapshot_dom(searchTerm=<query>, tabName=post_list)` to extract new post hrefs.\n   - Completely replace the `to_visit` queue with new unvisited posts.\n   - Return to Phase 3 to continue the process. * Do not renevigate to the post list page.(dont use browser_navigate action)",
       
